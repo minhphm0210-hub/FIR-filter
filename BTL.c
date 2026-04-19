@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+
+#define N 1000 // giả sử cho 1000 bits
+#define L 8    // tốc độ lấy mẫu là 8 mẫu mỗi bit
+
+// hàm sinh số ngẫu nhiên, mô phỏng các bit nguồn 0/1
+void generate_bits(int bits[]) {
+    for (int i = 0; i < N; i++) {
+        bits[i] = rand() % 2;
+    }
+}
+
+// hàm kỹ thuật BPSK
+void bpsk(int bits[], double signal[]) {
+    double check;
+
+    for (int i = 0; i < N; i++) {
+
+        // điều chế: bit = 1 thì check = 1, bit = 0 thì check = -1
+        if (bits[i] == 1) {
+            check = 1;
+        }
+        else {
+            check = -1;
+        }
+        
+        // các bit sau khi điều chế được sắp xếp vào mảng signal
+        for (int j = 0; j < L; j++) {
+            signal[i * L + j] = check;
+        }
+    }
+}
+
+// hàm thêm AWGN, mô phỏng nhiễu tín hiệu
+void add_awgn(double signal[], double noisy_signal[], int length, double noise_level) {
+    for (int i = 0; i < length; i++) {
+
+        double u1 = (rand() + 1.0) / (RAND_MAX + 1.0);
+        double u2 = (rand() + 1.0) / (RAND_MAX + 1.0);
+
+        double noise = sqrt(-2.0 * log(u1)) * cos(2 * 3.141592653589793 * u2);
+
+        noisy_signal[i] = signal[i] + noise_level * noise;
+    }
+}
+
+
+
+int main() {
+
+    int bits[N];
+    double signal[N * L]; // mảng signal chứa các bit sau khi qua module BPSK có kích thước bằng tổng số mẫu lấy được của tín hiệu
+    double noisy_signal[N * L]; // mảng noisy_signal chứa các bit thể hiện tín hiệu đã có nhiễu
+
+    srand(time(NULL));
+
+    generate_bits(bits);
+    bpsk(bits, signal);
+    add_awgn(signal, noisy_signal, N * L, 0.5);
+
+  
+
+
+
+
+
+  
+    return 0;
+}
