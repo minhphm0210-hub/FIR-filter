@@ -47,6 +47,35 @@ void add_awgn(double signal[], double noisy_signal[], int length, double noise_l
     }
 }
 
+void fir_filter(double input[], double output[], int length) {
+
+    //vòng lặp chạy từ đầu đến cuối mảng tín hiệu noisy_signal
+     for (int i = 0; i < length; i++) {
+        output[i] = 0;
+
+        //vòng lặp chạy dọc chiều dài cửa sổ
+        for (int n = 0; n < 51; n++) {
+            double h_lp;
+
+            if (n == 25) {
+                h_lp = 0.2; //tại n = 25 thì đáp ứng xung lý tưởng sẽ có dạng 0/0, nhưng nhờ có biến đổi đại số nên phần lim 0/0 = 1, và phần còn lại là 0.2
+            } else {
+                h_lp = 0.2 * sin(0.2 * 3.141592653589793 * (n - 25))  /  (0.2 * (n - 25));
+            }
+
+            
+            //cửa sổ Hamming
+            double w = 0.54 - 0.46 * cos((3.141592653589793 * n) / 25);
+
+            h_lp *= w;
+
+            if (i - n >= 0) {
+                output[i] += h_lp * input[i - n];
+            }
+        }
+     }
+}
+
 
 
 int main() {
@@ -54,6 +83,7 @@ int main() {
     int bits[N];
     double signal[N * L]; // mảng signal chứa các bit sau khi qua module BPSK có kích thước bằng tổng số mẫu lấy được của tín hiệu
     double noisy_signal[N * L]; // mảng noisy_signal chứa các bit thể hiện tín hiệu đã có nhiễu
+    double after_FIR[N * L]; //mảng chứa các tín hiệu sau khi được lọc bởi FIR filter
 
     srand(time(NULL));
 
@@ -61,12 +91,40 @@ int main() {
     bpsk(bits, signal);
     add_awgn(signal, noisy_signal, N * L, 0.5);
 
-  
+    FILE *f = fopen("C:\\test\\noisy_signal.txt", "w");
+if (f == NULL) {
+    printf("Error opening file!\n");
+}
+
+for (int i = 0; i < N * L; i++) {
+    fprintf(f, "%f\n", noisy_signal[i]);
+}
+
+fclose(f);
 
 
 
+    fir_filter(noisy_signal, after_FIR, N * L);
 
 
-  
+
+    for (int i = 0; i < 50; i++) {
+        printf("%f ", after_FIR[i]);
+    }
+
+
+
+//xuất dữ liệu để đưa vào Matlab
+FILE *f = fopen("C:\\test\\after_FIR.txt", "w");
+if (f == NULL) {
+    printf("Error opening file!\n");
+}
+
+for (int i = 0; i < N * L; i++) {
+    fprintf(f, "%f\n", after_FIR[i]);
+}
+
+fclose(f);
+ 
     return 0;
 }
